@@ -28,7 +28,7 @@ WHERE cohorts.name LIKE '%${process.argv[2]}%'
 LIMIT ${process.argv[3] || 5};
 `)
 .then(res => {
-  console.log(res.rows);
-  pool.end();
-})
-.catch(err => console.error('query error', err.stack));
+  res.rows.forEach(user => {
+    console.log(`${user.name} has an id of ${user.student_id} and was in the ${user.cohort} cohort`);
+  })
+}).catch(err => console.error('query error', err.stack));
