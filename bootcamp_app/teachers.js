@@ -10,25 +10,19 @@ const serverConfig = {
 
 const pool = new Pool(serverConfig);
 
-const cohortQuery = process.argv[2];
-const numResults = parseInt(process.argv[3]);
-
-// pool.query(`
-// SELECT students.id as student_id, students.name as name, cohorts.name as cohort
-// FROM students
-// JOIN cohorts ON cohorts.id = cohort_id
-// WHERE cohorts.id LIKE '$1%'
-// LIMIT $2;
-// `, [cohortQuery, numResults])
 pool.query(`
-SELECT students.id as student_id, students.name as name, cohorts.name as cohort
-FROM students
-JOIN cohorts ON cohorts.id = cohort_id
+SELECT DISTINCT teachers.name AS teacher, 
+  cohorts.name AS cohort, 
+  COUNT(assistance_requests) AS total_assistances
+FROM teachers JOIN assistance_requests ON teacher_id = teachers.id
+  JOIN students ON student_id = students.id
+  JOIN cohorts ON cohort_id = cohorts.id
 WHERE cohorts.name LIKE '%${process.argv[2]}%'
-LIMIT ${process.argv[3] || 5};
+GROUP BY teacher, cohort
+ORDER BY teacher;
 `)
 .then(res => {
-  console.log(res.rows);
-  pool.end();
-})
-.catch(err => console.error('query error', err.stack));
+  res.rows.forEach(teacher => {
+    console.log(`${teacher.cohort}: ${teacher.teacher}`);
+  })
+}).catch(err => console.error('query error', err.stack));
